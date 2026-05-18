@@ -13,7 +13,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
 
     if (existingUser)
       //El usuario ya existe em la bd
-      res.status(200).json(existingUser);
+      return res.status(200).json(existingUser);
 
     //En caso de que no exista en la base de datos existingUser==null
     const newUser = new User(req.body);

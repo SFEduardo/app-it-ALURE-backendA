@@ -1,4 +1,5 @@
 import { type Request, type Response } from "express";
+import cloudinary from "cloudinary";
 import Property from "../models/propertyModel.js";
 
 // Obtener todas las propiedades
@@ -181,12 +182,17 @@ export const createProperty = async (
 
     // Procesar las imágenes subidas
     const images: string[] = [];
-    if (req.files && Array.isArray(req.files)) {
-      (req.files as any).forEach((file: any) => {
-        if (file.path) {
-          images.push(file.path);
-        }
-      });
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (files && files.length > 0) {
+      const uploadedImages = await Promise.all(
+        files.map(async (file) => {
+          const base64Image = Buffer.from(file.buffer).toString("base64");
+          const dataUri = `data:${file.mimetype};base64,${base64Image}`;
+          const uploadResponse = await cloudinary.v2.uploader.upload(dataUri);
+          return uploadResponse.secure_url || uploadResponse.url || "";
+        }),
+      );
+      images.push(...(uploadedImages.filter(Boolean) as string[]));
     }
 
     const newProperty = new Property({
@@ -228,13 +234,18 @@ export const updateProperty = async (
     };
 
     // Si hay nuevas imágenes, actualizar
-    if (req.files && Array.isArray(req.files)) {
+    const files = req.files as Express.Multer.File[] | undefined;
+    if (files && files.length > 0) {
       const images: string[] = [];
-      (req.files as any).forEach((file: any) => {
-        if (file.path) {
-          images.push(file.path);
-        }
-      });
+      const uploadedImages = await Promise.all(
+        files.map(async (file) => {
+          const base64Image = Buffer.from(file.buffer).toString("base64");
+          const dataUri = `data:${file.mimetype};base64,${base64Image}`;
+          const uploadResponse = await cloudinary.v2.uploader.upload(dataUri);
+          return uploadResponse.secure_url || uploadResponse.url || "";
+        }),
+      );
+      images.push(...(uploadedImages.filter(Boolean) as string[]));
       if (images.length > 0) {
         updates.images = images;
       }

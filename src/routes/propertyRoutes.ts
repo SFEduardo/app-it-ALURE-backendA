@@ -1,7 +1,5 @@
 import express from "express";
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import { v2 as cloudinary } from "cloudinary";
 import {
   getAllProperties,
   getPropertyById,
@@ -17,16 +15,8 @@ import { jwtParse } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// Configurar Cloudinary storage para multer
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "proyectodoc/properties",
-    allowed_formats: ["jpg", "jpeg", "png", "gif", "webp"],
-  } as any,
-});
-
-const upload = multer({ storage });
+// Usar multer en memoria para que la subida a Cloudinary se realice manualmente
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Obtener todas las propiedades (sin autenticación)
 router.get("/", getAllProperties);

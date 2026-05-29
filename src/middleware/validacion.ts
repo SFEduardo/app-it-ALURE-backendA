@@ -8,13 +8,15 @@ const handValidationErrors = async (
 ): Promise<any> => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    //Si hay errores regresa un 400 y el mensaje de error
+    // Si el validador encontro errores de escritura o campos vacios en el body
+    // Mandamos un codigo de error 400 de regreso con la lista de fallos detectados
     return res.status(400).json({ errors: errors.array() });
   }
-  //Si no hay errores, se ejecuta la funcion next
+  // Si no hay ninguna falla, pasamos la peticion al siguiente controlador
   next();
-}; //Fin del heandValidationErrors
+}; // Fin de la funcion para procesar errores de validacion
 
+// Reglas de validacion para los campos del perfil de usuario en el backend
 export const validateUserRequest = [
   body("name")
     .isString()
@@ -36,8 +38,9 @@ export const validateUserRequest = [
     .notEmpty()
     .withMessage("El país debe ser un string"),
   handValidationErrors,
-]; //Fin de validateUserRequest
+]; // Fin de las reglas de validacion del perfil de usuario
 
+// Reglas de validacion para crear o editar una ficha tecnica de ALURE en el backend
 export const validateDespachoRequest = [
   body("title")
     .notEmpty()
@@ -62,4 +65,4 @@ export const validateDespachoRequest = [
   body("distribution").notEmpty().withMessage("La distribución es requerida"),
 
   handValidationErrors,
-]; //Fin de validateDespachoRequest
+]; // Fin de las reglas de validacion de la arquitectura ALURE

@@ -2,7 +2,7 @@ import { auth } from "express-oauth2-jwt-bearer";
 import { type Request, type Response, type NextFunction } from "express";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import User from "../models/userModel.js";
+import User from "../models/modeloUsuario.js";
 
 dotenv.config();
 
@@ -28,34 +28,27 @@ export const jwtParse = async (
 ): Promise<any> => {
   const { authorization } = req.headers;
 
-  //Los headers comenzaran con una cadena
-  //Bearer token, por ejemplo
-  //Bearer 1234xesldfsksjs
-  //Por lo tanto es necesario verificar que la autorización comience
-  //con la cadena Bearer
+  // Las cabeceras del token siempre empiezan con la palabra Bearer seguida del token real
+  // Por ejemplo: Bearer 1234xesldfsksjs
+  // Checamos que la autorizacion venga en ese formato para estar seguros
   if (!authorization || !authorization.startsWith("Bearer")) {
     console.log("jwtParse - Authorization denegada");
     return res.sendStatus(401).json({ message: "Autorización denegada" });
-  } // Fin de if(!authorization)
+  }
 
-  //Obtenemos el token del header
-  //Bearer 1234xesldfsksjs
-  // [0   1]
-  //split = ["Bearer", "1234xesldfsksjs"]
-  //split divide por el caracter espacio " " la cadena
+  // Extraemos el token puro quitando la palabra Bearer
+  // Separamos el string por espacios para quedarnos solo con la parte del token
   const token = authorization.split(" ")[1] || "";
 
   try {
     console.log("jwtParse - Analizando Token");
-    //Analizamos el token para validar que sea correcto
-    //Decoded decodifica el token dividiendolo en partes
+    // Decodificamos el token de seguridad para poder ver que trae adentro
     const decoded = jwt.decode(token) as jwt.JwtPayload;
 
-    //El elemento sub del token contiene el Id del usuario
-    //que inició sesión en la Api Auth0
+    // La propiedad sub del token contiene el ID unico del usuario registrado en Auth0
     const auth0Id = decoded.sub || "";
 
-    //Comprobamos que exista el usuario en la base de datos
+    // Buscamos al usuario en nuestra base de datos de MongoDB Atlas usando ese ID
     const user = await User.findOne({ auth0Id });
 
     if (!user) {
@@ -63,8 +56,8 @@ export const jwtParse = async (
       return res.status(401).json({ message: "Autorización denegada" });
     }
 
-    //Almacenamos el auth0Id y el userId en el objeto Request
-    //para que esté disponible en todo el backend
+    // Guardamos el ID de auth0 y el ID interno de la base de datos en la peticion
+    // de esta manera cualquier controlador posterior los puede usar directamente
     req.auth0Id = auth0Id as string;
     req.userId = user._id.toString();
     console.log("JwtParse - Autorización concedida");
@@ -73,5 +66,5 @@ export const jwtParse = async (
     console.log(error);
     console.log("JwtParse - catch Autorización denegada");
     return res.status(401).json({ message: "Autorización denegada" });
-  } //Fin del catch
+  }
 }; // Fin de jwtParse
